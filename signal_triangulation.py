@@ -150,7 +150,7 @@ def get_pivot_arguments(n_receptors, argv):
             print("Invalid arguments: expected integer value for pivot")
             return False
     else:
-        pivot = rd.randint(0, 4)
+        pivot = rd.randint(0, n_receptors - 1)
 
 
 
@@ -182,7 +182,7 @@ def get_pivot_input(n_receptors):
         try:
             inp = input()
             if inp == "":
-                return rd.randint(0, 4)
+                return rd.randint(0, n_receptors - 1)
             else:
                 pivot = int(inp)
                 if pivot < 0 or pivot >= n_receptors:
