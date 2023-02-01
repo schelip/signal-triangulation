@@ -1,4 +1,4 @@
-import sys, json, numpy as np
+import sys, json, random as rd, numpy as np
 
 def main(argv: list[any]) -> None:
     """Main procedure, calls the functions to receive the data, prepare the data and then calculate the result
@@ -6,7 +6,6 @@ def main(argv: list[any]) -> None:
     Args:
         argv (list): command line arguments
     """
-    pivot = 2
     
     if len(argv) <= 1:
         print_help()
@@ -16,26 +15,33 @@ def main(argv: list[any]) -> None:
     if not receptors_data:
         return
     
-    A = get_coeficients_matrix(receptors_data, pivot)
-    if not type(A) is np.ndarray:
-        return
-    print(f"Receptor position coeficients matrix: \n{A}\n")
-    
-    potency_values = None
+    potency_values, pivot = None, None
+    n_receptors = len(receptors_data)
 
     if argv[2] == "-v" or argv[2] == "--values":
         potency_values = get_potency_values_arguments(argv[3:])
+        pivot = get_pivot_arguments(n_receptors, argv[-2:])
     elif argv[2] == "-i" or argv[2] == "--interactive":
-        potency_values = get_potency_values_input(len(receptors_data))
+        potency_values = get_values_input(n_receptors)
+        pivot = get_pivot_input(n_receptors)
     else:
         print_help()
         return
         
-    if potency_values == None:
+    if potency_values == None or potency_values == False:
         print("Error reading potency values")
         return
     if len(potency_values) != len(receptors_data):
         print(f"Invalid arguments: inadequate number of potency values for receptors (expected {len(receptors_data)})")
+        return
+    if pivot != 0 and (pivot == None or not pivot):
+        print("Error getting pivot")
+        return
+
+    A = get_coeficients_matrix(receptors_data, pivot)
+    if not type(A) is np.ndarray:
+        return
+    print(f"Receptor position coeficients matrix: \n{A}\n")
 
     B = get_results_matrix(receptors_data, potency_values, pivot)
 
@@ -52,10 +58,12 @@ def main(argv: list[any]) -> None:
 def print_help() -> None:
     """Prints usage info for the program"""
     print("""
-Usage: path command [values]
+Usage: path <command> [<values>...]
 Where path identifies the file with the receptors data and command is one of:
 -v|--values       : parses the next n arguments and starts the program with n receptors and the
                     values of the arguments as the potency received by the receptors
+-p|--pivot        : parses the next argument as the equation to be used as a pivot to linearize the
+                    system. can only be used AFTER a --values usage
 -i|--interactive  : starts the program in interactive mode, asking for the number of receptors
                     and the potency received values one by one
 -h|--help         : shows this help menu
@@ -122,13 +130,31 @@ def get_potency_values_arguments(arguments: list[any]) -> list[float]:
         print("Invalid arguments: at least 3 potency received values needs to be passed as an argument")
         return False
     try:
+        if arguments[-2] == "-p":
+            arguments = arguments[:-2]
         return [float(value) for value in arguments]
     except ValueError:
         print("Invalid arguments: at least one of the values is not a real number")
     return False
 
 
-def get_potency_values_input(n_receptors: int) -> list[float]:
+def get_pivot_arguments(n_receptors, argv):
+    if argv[-2] == "-p":
+        try:
+            pivot = int(argv[-1])
+            if pivot < 0 or pivot >= n_receptors:
+                print(f"Invalid arguments: pivot value must be non-negative and adequate to the number of receptors {n_receptors} - 1 = {n_receptors - 1}")
+                return False
+            return pivot
+        except ValueError:
+            print("Invalid arguments: expected integer value for pivot")
+            return False
+    else:
+        pivot = rd.randint(0, 4)
+
+
+
+def get_values_input(n_receptors: int) -> list[float]:
     """Starts interactive mode, which will ask for as much potency values as expected, and returns those values
 
     Args:
@@ -148,6 +174,24 @@ def get_potency_values_input(n_receptors: int) -> list[float]:
                 print("Invalid input: not a real number")
                 continue
     return potency_values
+
+
+def get_pivot_input(n_receptors):
+    while True:
+        print(f"Input the pivot for the linearization (max {n_receptors - 1}) or <enter> for random: ")
+        try:
+            inp = input()
+            if inp == "":
+                return rd.randint(0, 4)
+            else:
+                pivot = int(inp)
+                if pivot < 0 or pivot >= n_receptors:
+                    print(f"Invalid arguments: pivot value must be non-negative and not higher than number of receptors {n_receptors}")
+                    continue
+                return pivot
+        except ValueError:
+            print("Invalid input: not an integer")
+            continue
 
 
 def get_coeficients_matrix(receptors_data: list[dict[float, float, float, float]],
@@ -175,6 +219,7 @@ def get_coeficients_matrix(receptors_data: list[dict[float, float, float, float]
         pivot (float): the arbitrary pivot number to linearize the system
 
     Returns:
+        False: if an error ocurred
         np.ndarray: The Mx2 coeficients matrix
     """
     A = np.array([
