@@ -43,6 +43,8 @@ def main(argv: list[any]) -> None:
         return
     print(f"Receptor position coeficients matrix: \n{A}\n")
 
+    print(f"Estimated distances:\n{np.array([get_estimated_distance(receptors_data[i], potency_values[i]) for i in range(len(receptors_data))])}\n")
+
     B = get_results_matrix(receptors_data, potency_values, pivot)
 
     if not type(B) is np.ndarray:
@@ -138,7 +140,17 @@ def get_potency_values_arguments(arguments: list[any]) -> list[float]:
     return False
 
 
-def get_pivot_arguments(n_receptors, argv):
+def get_pivot_arguments(n_receptors: int, argv: list[any]) -> int:
+    """Parses the arguments to get the pivot equation index or generates a random value
+
+    Args:
+        n_receptors (int): The number of receptors, for validation  
+        argv (list[any]): The arguments passed to the command line
+
+    Returns:
+        False: If an error ocurred
+        int: The read/generated pivot index
+    """
     if argv[-2] == "-p":
         try:
             pivot = int(argv[-1])
@@ -176,7 +188,15 @@ def get_values_input(n_receptors: int) -> list[float]:
     return potency_values
 
 
-def get_pivot_input(n_receptors):
+def get_pivot_input(n_receptors: int) -> int:
+    """Queries the user for the pivot equation index, or generates a random value
+
+    Args:
+        n_receptors (int): how many receptors there are, for validation
+
+    Returns:
+        int: the read/generated pivot index
+    """
     while True:
         print(f"Input the pivot for the linearization (max {n_receptors - 1}) or <enter> for random: ")
         try:
@@ -263,9 +283,18 @@ def get_results_matrix(receptors_data: list[dict[float, float, float, float]],
     Returns:
         np.ndarray: The Mx1 results matrix
     """
-    d_pivot = get_estimated_distance(receptors_data[pivot], potency_values[pivot]) ** 2 - receptors_data[pivot]["x"] ** 2 - receptors_data[pivot]["y"] ** 2
-    return np.array([(get_estimated_distance(receptors_data[i], potency_values[i]) ** 2 - receptors_data[i]["x"] ** 2 - receptors_data[i]["y"] ** 2) - d_pivot
-                  for i in range(len(receptors_data)) if i != pivot])
+    d_pivot = get_estimated_distance(
+        receptors_data[pivot],
+        potency_values[pivot]
+    ) ** 2 - receptors_data[pivot]["x"] ** 2 - receptors_data[pivot]["y"] ** 2
+
+    return np.array([
+        (get_estimated_distance(receptors_data[i], potency_values[i]) ** 2 -
+         receptors_data[i]["x"] ** 2 -
+         receptors_data[i]["y"] ** 2) -
+         d_pivot
+        for i in range(len(receptors_data))
+        if i != pivot])
 
 
 def triangulate(A: np.ndarray, B: np.ndarray) -> np.ndarray:

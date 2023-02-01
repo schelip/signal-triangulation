@@ -32,9 +32,9 @@ echo '[
     }
 ]' > receptors_data_example.json
 
-printf 'Exemplo 1 (3.00, 3.00)\n'
+printf 'Exemplo 1 (0.00, 9.00)\n'
 py signal_triangulation.py receptors_data_example.json -v -48.4 -50.6 -32.2 -47.4 -46.3 -p 4 \
 
-printf '\nExemplo 2 (0.00, 9.00)\n'
+printf '\nExemplo 2 (3.00, 3.00)\n'
 py signal_triangulation.py receptors_data_example.json -v -46.9 -46.4 -41.2 -45.8 -48.7 -p 2 \
 
