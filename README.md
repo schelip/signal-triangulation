@@ -17,7 +17,7 @@ The data of the receptors must be defined in a json file which will be passed as
 Then, the program can be start on interactive mode (which will ask for the potency values of each receptor, one by one), or the potency values can be passed as the next n arguments.
 
 ```
-$ py signal_triangulation.py path_to_receiver_data [-i|-v] [values...]
+$ py signal_triangulation.py [<path_to_receiver_data>] [-i|-v] [<values>...]
 ```
 
 Running `./example.sh` will generate a sample receptor data json and run the triangulation for two example emissors
